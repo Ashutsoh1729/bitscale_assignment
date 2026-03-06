@@ -5,17 +5,17 @@
 #    1. Seed the DB:  bun src/db/seed.ts
 #    2. Start server: bun run dev
 #
-#  Run all requests:
-#    hurl --test src/test/identify.hurl
+#  Run all requests (local):
+#    hurl --test --variables-file src/test/vars.env src/test/identify.hurl
 #
 #  Run with verbose output (see response bodies):
-#    hurl --very-verbose src/test/identify.hurl
+#    hurl --very-verbose --variables-file src/test/vars.env src/test/identify.hurl
 # ═══════════════════════════════════════════════════════════
 
 
 # ─── Health check ───
 
-GET http://localhost:3000/
+GET {{base_url}}/
 HTTP 200
 [Asserts]
 jsonpath "$.status" == "ok"
@@ -23,7 +23,7 @@ jsonpath "$.status" == "ok"
 
 # ─── Case 1: No match → new primary ───
 
-POST http://localhost:3000/identify
+POST {{base_url}}/identify
 Content-Type: application/json
 {
     "email": "hurl_test_new@example.com",
@@ -39,7 +39,7 @@ jsonpath "$.contact.secondaryContactIds" count == 0
 
 # ─── Case 2: Exact match → no new row (Scenario B) ───
 
-POST http://localhost:3000/identify
+POST {{base_url}}/identify
 Content-Type: application/json
 {
     "email": "george@example.com",
@@ -54,7 +54,7 @@ jsonpath "$.contact.phoneNumbers" contains "1111111111"
 
 # ─── Case 2: Exact match on chain (Scenario E) ───
 
-POST http://localhost:3000/identify
+POST {{base_url}}/identify
 Content-Type: application/json
 {
     "email": "dave@example.com",
@@ -69,7 +69,7 @@ jsonpath "$.contact.phoneNumbers" contains "6666666666"
 
 # ─── Case 3: Partial match — same email, new phone (Scenario C) ───
 
-POST http://localhost:3000/identify
+POST {{base_url}}/identify
 Content-Type: application/json
 {
     "email": "alice@example.com",
@@ -85,7 +85,7 @@ jsonpath "$.contact.secondaryContactIds" count >= 1
 
 # ─── Case 3: Partial match — new email, same phone (Scenario C alt) ───
 
-POST http://localhost:3000/identify
+POST {{base_url}}/identify
 Content-Type: application/json
 {
     "email": "alice_hurl_new@example.com",
@@ -101,7 +101,7 @@ jsonpath "$.contact.secondaryContactIds" count >= 1
 
 # ─── Case 4: Two primaries linked (Scenario D) ───
 
-POST http://localhost:3000/identify
+POST {{base_url}}/identify
 Content-Type: application/json
 {
     "email": "bob@example.com",
@@ -116,7 +116,7 @@ jsonpath "$.contact.phoneNumbers" contains "5555555555"
 
 # ─── Validation: missing both fields → 400 ───
 
-POST http://localhost:3000/identify
+POST {{base_url}}/identify
 Content-Type: application/json
 {}
 HTTP 400
@@ -126,5 +126,5 @@ jsonpath "$.error" == "Email or phone number is required"
 
 # ─── 404: wrong route ───
 
-GET http://localhost:3000/nonexistent
+GET {{base_url}}/nonexistent
 HTTP 404
